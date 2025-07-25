@@ -2,7 +2,6 @@ package com.ty.forex.service;
 
 import com.ty.forex.model.ExchangeRate;
 import com.ty.forex.repository.ForexRepository;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
