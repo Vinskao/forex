@@ -1,0 +1,6 @@
+spring:
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/forex
+taifex:
+  forex-api-url: https://openapi.taifex.com.tw/v1/DailyForeignExchangeRates
