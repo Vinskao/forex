@@ -24,7 +24,7 @@ public class ForexBatchJob {
     }
 
     // 第1功能
-    @Scheduled(cron = "0 0 18 * * *")
+    @Scheduled(cron = "${forex.batch.cron}")
     public void fetchAndSaveUsdNtdRate() {
         try {
             String response = restTemplate.getForObject(apiUrl, String.class);
