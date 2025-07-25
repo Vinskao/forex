@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.ty.forex.dto.ErrorCode;
 import com.ty.forex.dto.ErrorResponse;
 import com.ty.forex.dto.ForexRequest;
 import com.ty.forex.dto.ForexResponse;
@@ -46,7 +47,7 @@ public class ForexController {
     }
 
     @GetMapping("/usd-twd-history")
-    public List<Document> getUsdTwdHistory(
+    public List<Map<String, String>> getUsdTwdHistory(
         @RequestParam String startDate,
         @RequestParam String endDate
     ) {
@@ -55,6 +56,7 @@ public class ForexController {
         return forexRepository.findUsdTwdRates(start, end);
     }
 
+    // 第2功能
     @PostMapping("/history")
     public ResponseEntity<?> getForexHistory(@RequestBody ForexRequest request) {
         LocalDate start;
@@ -64,7 +66,7 @@ public class ForexController {
             start = LocalDate.parse(request.getStartDate().replace("/", "-"));
             end = LocalDate.parse(request.getEndDate().replace("/", "-"));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(new ErrorResponse("E001", "日期格式錯誤"));
+            return ResponseEntity.badRequest().body(new ErrorResponse(ErrorCode.INVALID_DATE_FORMAT));
         }
 
         LocalDate today = LocalDate.now();
@@ -72,17 +74,17 @@ public class ForexController {
         LocalDate yesterday = today.minusDays(1);
 
         if (start.isBefore(oneYearAgo) || end.isAfter(yesterday) || start.isAfter(end)) {
-            return ResponseEntity.badRequest().body(new ErrorResponse("E001", "日期區間不符"));
+            return ResponseEntity.badRequest().body(new ErrorResponse(ErrorCode.INVALID_DATE_RANGE));
         }
 
         if (!"usd".equalsIgnoreCase(request.getCurrency())) {
-            return ResponseEntity.badRequest().body(new ErrorResponse("E002", "不支援的幣別"));
+            return ResponseEntity.badRequest().body(new ErrorResponse(ErrorCode.UNSUPPORTED_CURRENCY));
         }
 
-        List<Document> records = forexRepository.findUsdTwdRates(start, end);
+        List<Map<String, String>> records = forexRepository.findUsdTwdRates(start, end);
 
         return ResponseEntity.ok(Map.of(
-            "error", new ErrorResponse("0000", "成功"),
+            "error", new ErrorResponse(ErrorCode.SUCCESS),
             "currency", records
         ));
     }

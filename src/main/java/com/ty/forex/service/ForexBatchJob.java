@@ -14,16 +14,16 @@ import java.time.format.DateTimeFormatter;
 @Component
 public class ForexBatchJob {
 
-    private final ForexRepository forexRepository;
-    private final RestTemplate restTemplate = new RestTemplate();
-
+    ForexRepository forexRepository;
+    RestTemplate restTemplate = new RestTemplate();
     @Value("${taifex.forex-api-url}")
-    private String apiUrl;
+    String apiUrl;
 
     public ForexBatchJob(ForexRepository forexRepository) {
         this.forexRepository = forexRepository;
     }
 
+    // 第1功能
     @Scheduled(cron = "0 0 18 * * *")
     public void fetchAndSaveUsdTwdRate() {
         try {
