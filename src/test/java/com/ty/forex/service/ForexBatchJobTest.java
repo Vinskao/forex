@@ -42,7 +42,7 @@ public class ForexBatchJobTest {
     }
 
     @Test
-    void testFetchAndSaveUsdTwdRate_Success() {
+    void testFetchAndSaveUsdNtdRate_Success() {
         String json = "[" +
                 "{\"Currency\":\"USD/NTD\",\"Date\":\"2024-01-01 18:00:00\",\"Rate\":\"31.01\"}," +
                 "{\"Currency\":\"EUR/NTD\",\"Date\":\"2024-01-01 18:00:00\",\"Rate\":\"34.01\"}]";
@@ -50,7 +50,7 @@ public class ForexBatchJobTest {
 
         ForexBatchJob job = new ForexBatchJob(forexRepository) {
             @Override
-            public void fetchAndSaveUsdTwdRate() {
+            public void fetchAndSaveUsdNtdRate() {
                 try {
                     String response = restTemplate.getForObject(apiUrl, String.class);
                     JSONArray arr = new JSONArray(response);
@@ -76,7 +76,7 @@ public class ForexBatchJobTest {
         job.restTemplate = restTemplate;
         job.apiUrl = apiUrl;
 
-        job.fetchAndSaveUsdTwdRate();
+        job.fetchAndSaveUsdNtdRate();
 
         ArgumentCaptor<ExchangeRate> captor = ArgumentCaptor.forClass(ExchangeRate.class);
         verify(forexRepository, times(1)).save(captor.capture());
@@ -87,11 +87,11 @@ public class ForexBatchJobTest {
     }
 
     @Test
-    void testFetchAndSaveUsdTwdRate_ApiException() {
+    void testFetchAndSaveUsdNtdRate_ApiException() {
         when(restTemplate.getForObject(any(String.class), eq(String.class))).thenThrow(new RuntimeException("API error"));
         ForexBatchJob job = new ForexBatchJob(forexRepository) {
             @Override
-            public void fetchAndSaveUsdTwdRate() {
+            public void fetchAndSaveUsdNtdRate() {
                 try {
                     String response = restTemplate.getForObject(apiUrl, String.class);
                     JSONArray arr = new JSONArray(response);
@@ -116,7 +116,7 @@ public class ForexBatchJobTest {
         job.restTemplate = restTemplate;
         job.apiUrl = apiUrl;
 
-        assertDoesNotThrow(job::fetchAndSaveUsdTwdRate);
+        assertDoesNotThrow(job::fetchAndSaveUsdNtdRate);
         verify(forexRepository, never()).save(any());
     }
 }

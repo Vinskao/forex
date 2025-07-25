@@ -21,12 +21,12 @@ public class ForexController {
     private ForexService forexservice;
 
     // 第2功能
-    @GetMapping("/usd-twd-history")
-    public ResponseEntity<?> getUsdTwdHistory(
+    @GetMapping("/usd-ntd-history")
+    public ResponseEntity<?> getUsdNtdHistory(
         @RequestParam String currency,
         @RequestParam String startDate,
         @RequestParam String endDate
     ) {
-        return forexservice.getUsdTwdHistoryResponse(currency, startDate, endDate);
+        return forexservice.getUsdNtdHistoryResponse(currency, startDate, endDate);
     }
 }

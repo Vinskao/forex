@@ -18,7 +18,7 @@ public class ForexService {
     @Autowired
     private ForexRepository forexRepository;
 
-    public ResponseEntity<?> getUsdTwdHistoryResponse(String currency, String startDateStr, String endDateStr) {
+    public ResponseEntity<?> getUsdNtdHistoryResponse(String currency, String startDateStr, String endDateStr) {
         Optional<ErrorResponse> error = validateDateRange(startDateStr, endDateStr);
         if (error.isPresent()) {
             return ResponseEntity.badRequest().body(error.get());
