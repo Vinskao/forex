@@ -3,13 +3,10 @@ package com.ty.forex.model;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 @Document(collection = "forex_rates")
 public class ExchangeRate {
-    @Id
-    private String id;
     private String currency;
     private LocalDate date;
     private BigDecimal rate;
@@ -17,18 +14,9 @@ public class ExchangeRate {
     public ExchangeRate() {}
 
     public ExchangeRate(String id, String currency, LocalDate date, BigDecimal rate) {
-        this.id = id;
         this.currency = currency;
         this.date = date;
         this.rate = rate;
-    }
-
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
     }
 
     public String getCurrency() {

@@ -1,41 +1,57 @@
 package com.ty.forex.service;
 
-import java.util.HashMap;
-import java.util.Map;
+import com.ty.forex.dto.ErrorCode;
+import com.ty.forex.dto.ErrorResponse;
+import com.ty.forex.repository.ForexRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import com.ty.forex.dto.ForexResponse;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 @Service
 public class ForexService {
 
-    public Map<String, Double> getExchangeRates() {
-        Map<String, Double> rates = new HashMap<>();
-        rates.put("USD", 1.0);
-        rates.put("EUR", 0.85);
-        rates.put("JPY", 110.0);
-        rates.put("TWD", 30.0);
-        return rates;
+    @Autowired
+    private ForexRepository forexRepository;
+
+    public ResponseEntity<?> getUsdTwdHistoryResponse(String currency, String startDateStr, String endDateStr) {
+        Optional<ErrorResponse> error = validateDateRange(startDateStr, endDateStr);
+        if (error.isPresent()) {
+            return ResponseEntity.badRequest().body(error.get());
+        }
+        List<Map<String, String>> records = getRates(currency, startDateStr, endDateStr);
+        return ResponseEntity.ok(Map.of(
+            "error", new ErrorResponse(ErrorCode.SUCCESS),
+            "currency", records
+        ));
     }
 
-    public ForexResponse convertCurrency(String fromCurrency, String toCurrency, double amount) {
-        Map<String, Double> rates = getExchangeRates();
+    public Optional<ErrorResponse> validateDateRange(String startDateStr, String endDateStr) {
+        try {
+            LocalDate start = LocalDate.parse(startDateStr.replace("/", "-"));
+            LocalDate end = LocalDate.parse(endDateStr.replace("/", "-"));
 
-        double fromRate = rates.getOrDefault(fromCurrency.toUpperCase(), -1.0);
-        double toRate = rates.getOrDefault(toCurrency.toUpperCase(), -1.0);
+            LocalDate today = LocalDate.now();
+            LocalDate oneYearAgo = today.minusYears(1);
+            LocalDate yesterday = today.minusDays(1);
 
-        if (fromRate <= 0 || toRate <= 0) {
-            throw new IllegalArgumentException("Unsupported currency");
+            if (start.isBefore(oneYearAgo) || end.isAfter(yesterday) || start.isAfter(end)) {
+                return Optional.of(new ErrorResponse(ErrorCode.INVALID_DATE_RANGE));
+            }
+
+            return Optional.empty();
+        } catch (Exception e) {
+            return Optional.of(new ErrorResponse(ErrorCode.INVALID_DATE_FORMAT));
         }
+    }
 
-        double convertedAmount = (amount / fromRate) * toRate;
-
-        return new ForexResponse(
-            fromCurrency.toUpperCase(),
-            toCurrency.toUpperCase(),
-            amount,
-            convertedAmount,
-            toRate / fromRate
-        );
+    public List<Map<String, String>> getRates(String currency, String startDateStr, String endDateStr) {
+        LocalDate start = LocalDate.parse(startDateStr.replace("/", "-"));
+        LocalDate end = LocalDate.parse(endDateStr.replace("/", "-"));
+        return forexRepository.findByCurrencyAndDateBetween(currency, start, end);
     }
 }
