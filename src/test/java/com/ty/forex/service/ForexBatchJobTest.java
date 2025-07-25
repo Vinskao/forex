@@ -2,8 +2,7 @@ package com.ty.forex.service;
 
 import com.ty.forex.model.ExchangeRate;
 import com.ty.forex.repository.ForexRepository;
-import org.json.JSONArray;
-import org.json.JSONObject;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -16,8 +15,6 @@ import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -43,41 +40,16 @@ public class ForexBatchJobTest {
 
     @Test
     void testFetchAndSaveUsdNtdRate_Success() {
-        String json = "[" +
-                "{\"Currency\":\"USD/NTD\",\"Date\":\"2024-01-01 18:00:00\",\"Rate\":\"31.01\"}," +
-                "{\"Currency\":\"EUR/NTD\",\"Date\":\"2024-01-01 18:00:00\",\"Rate\":\"34.01\"}]";
+        // Arrange
+        String json = "[{\"Date\":\"20240101\",\"USD/NTD\":\"31.01\"},{\"Date\":\"20240101\",\"EUR/NTD\":\"34.01\"}]";
         when(restTemplate.getForObject(any(String.class), eq(String.class))).thenReturn(json);
+        forexBatchJob.restTemplate = restTemplate;
+        forexBatchJob.apiUrl = apiUrl;
 
-        ForexBatchJob job = new ForexBatchJob(forexRepository) {
-            @Override
-            public void fetchAndSaveUsdNtdRate() {
-                try {
-                    String response = restTemplate.getForObject(apiUrl, String.class);
-                    JSONArray arr = new JSONArray(response);
-                    for (int i = 0; i < arr.length(); i++) {
-                        JSONObject obj = arr.getJSONObject(i);
-                        if ("USD/NTD".equals(obj.getString("Currency"))) {
-                            String dateStr = obj.getString("Date");
-                            String rateStr = obj.getString("Rate");
-                            LocalDateTime date = LocalDateTime.parse(dateStr, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-                            BigDecimal rate = new BigDecimal(rateStr);
-                            ExchangeRate exchangeRate = new ExchangeRate();
-                            exchangeRate.setCurrency("USD/NTD");
-                            exchangeRate.setDate(date.toLocalDate());
-                            exchangeRate.setRate(rate);
-                            forexRepository.save(exchangeRate);
-                        }
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        };
-        job.restTemplate = restTemplate;
-        job.apiUrl = apiUrl;
+        // Act
+        forexBatchJob.fetchAndSaveUsdNtdRate();
 
-        job.fetchAndSaveUsdNtdRate();
-
+        // Assert
         ArgumentCaptor<ExchangeRate> captor = ArgumentCaptor.forClass(ExchangeRate.class);
         verify(forexRepository, times(1)).save(captor.capture());
         ExchangeRate saved = captor.getValue();
@@ -88,35 +60,13 @@ public class ForexBatchJobTest {
 
     @Test
     void testFetchAndSaveUsdNtdRate_ApiException() {
+        // Arrange
         when(restTemplate.getForObject(any(String.class), eq(String.class))).thenThrow(new RuntimeException("API error"));
-        ForexBatchJob job = new ForexBatchJob(forexRepository) {
-            @Override
-            public void fetchAndSaveUsdNtdRate() {
-                try {
-                    String response = restTemplate.getForObject(apiUrl, String.class);
-                    JSONArray arr = new JSONArray(response);
-                    for (int i = 0; i < arr.length(); i++) {
-                        JSONObject obj = arr.getJSONObject(i);
-                        if ("USD/NTD".equals(obj.getString("Currency"))) {
-                            String dateStr = obj.getString("Date");
-                            String rateStr = obj.getString("Rate");
-                            LocalDateTime date = LocalDateTime.parse(dateStr, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-                            BigDecimal rate = new BigDecimal(rateStr);
-                            ExchangeRate exchangeRate = new ExchangeRate();
-                            exchangeRate.setCurrency("USD/NTD");
-                            exchangeRate.setDate(date.toLocalDate());
-                            exchangeRate.setRate(rate);
-                            forexRepository.save(exchangeRate);
-                        }
-                    }
-                } catch (Exception e) {
-                }
-            }
-        };
-        job.restTemplate = restTemplate;
-        job.apiUrl = apiUrl;
+        forexBatchJob.restTemplate = restTemplate;
+        forexBatchJob.apiUrl = apiUrl;
 
-        assertDoesNotThrow(job::fetchAndSaveUsdNtdRate);
+        // Act & Assert
+        assertDoesNotThrow(() -> forexBatchJob.fetchAndSaveUsdNtdRate());
         verify(forexRepository, never()).save(any());
     }
 }

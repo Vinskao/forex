@@ -1,9 +1,9 @@
 package com.ty.forex.service;
 
-import com.ty.forex.dto.ErrorCode;
 import com.ty.forex.dto.ErrorResponse;
+import com.ty.forex.model.ErrorCode;
+import com.ty.forex.model.ExchangeRate;
 import com.ty.forex.repository.ForexRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -11,26 +11,37 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.HashMap;
 
 @Service
 public class ForexService {
 
-    @Autowired
-    private ForexRepository forexRepository;
+    private final ForexRepository forexRepository;
+
+    public ForexService(ForexRepository forexRepository) {
+        this.forexRepository = forexRepository;
+    }
 
     public ResponseEntity<?> getUsdNtdHistoryResponse(String currency, String startDateStr, String endDateStr) {
         Optional<ErrorResponse> error = validateDateRange(startDateStr, endDateStr);
         if (error.isPresent()) {
             return ResponseEntity.badRequest().body(error.get());
         }
-        List<Map<String, String>> records = getRates(currency, startDateStr, endDateStr);
+        List<ExchangeRate> records = getRates(currency, startDateStr, endDateStr);
+        List<Map<String, Object>> result = new java.util.ArrayList<>();
+        for (ExchangeRate rate : records) {
+            Map<String, Object> item = new HashMap<>();
+            item.put("date", rate.getDate().format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd")));
+            item.put(currency.toLowerCase(), rate.getRate().toString());
+            result.add(item);
+        }
         return ResponseEntity.ok(Map.of(
             "error", new ErrorResponse(ErrorCode.SUCCESS),
-            "currency", records
+            "currency", result
         ));
     }
 
-    public Optional<ErrorResponse> validateDateRange(String startDateStr, String endDateStr) {
+    private Optional<ErrorResponse> validateDateRange(String startDateStr, String endDateStr) {
         try {
             LocalDate start = LocalDate.parse(startDateStr.replace("/", "-"));
             LocalDate end = LocalDate.parse(endDateStr.replace("/", "-"));
@@ -49,7 +60,7 @@ public class ForexService {
         }
     }
 
-    public List<Map<String, String>> getRates(String currency, String startDateStr, String endDateStr) {
+    private List<ExchangeRate> getRates(String currency, String startDateStr, String endDateStr) {
         LocalDate start = LocalDate.parse(startDateStr.replace("/", "-"));
         LocalDate end = LocalDate.parse(endDateStr.replace("/", "-"));
         return forexRepository.findByCurrencyAndDateBetween(currency, start, end);

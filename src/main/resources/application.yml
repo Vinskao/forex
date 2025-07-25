@@ -8,3 +8,4 @@ taifex:
 forex:
   batch:
     cron: "0 0 18 * * *"
+    # cron: "0/10 * * * * *"  # for testing

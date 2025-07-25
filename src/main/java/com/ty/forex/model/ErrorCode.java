@@ -1,4 +1,4 @@
-package com.ty.forex.dto;
+package com.ty.forex.model;
 
 public enum ErrorCode {
     SUCCESS("0000", "成功"),

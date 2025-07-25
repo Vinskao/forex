@@ -1,5 +1,7 @@
 package com.ty.forex.dto;
 
+import com.ty.forex.model.ErrorCode;
+
 public class ErrorResponse {
     private String code;
     private String message;
